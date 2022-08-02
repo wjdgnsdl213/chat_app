@@ -26,6 +26,11 @@ class _AuthWidgetState extends State<AuthWidget> {
   TextEditingController _passwordController = TextEditingController();
   TextEditingController _cPasswordController = TextEditingController();
 
+  bool isRegister = true;
+
+  Duration _duration = Duration(milliseconds: 300);
+  Curve _curve = Curves.fastOutSlowIn;
+
   static final double _cornerRadius = 8.0;
   OutlineInputBorder _border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(_cornerRadius),
@@ -47,6 +52,7 @@ class _AuthWidgetState extends State<AuthWidget> {
           child: Form(
             key:_formKey,
             child: ListView(
+              reverse: true,
               padding: EdgeInsets.all(16),
               children: [
                 SizedBox(
@@ -58,16 +64,46 @@ class _AuthWidgetState extends State<AuthWidget> {
                   child: Image.asset('assets/logo.jpg'),
                 ),
                 SizedBox(height: 16,),
+                ButtonBar(
+                  children: [
+                    FlatButton(
+                        child: Text('Login',
+                            style: TextStyle(fontSize: 18,
+                            fontWeight: isRegister?FontWeight.w400 : FontWeight.w600,
+                            color: isRegister?Colors.black45 : Colors.black87),),
+                        onPressed: (){
+                          setState(() {
+                            isRegister = false;
+                          });
+                        }),
+                    FlatButton(
+                        child: Text('Register',style: TextStyle(fontSize: 18,
+                            fontWeight: isRegister?FontWeight.w600 : FontWeight.w400,
+                            color: isRegister?Colors.black87 : Colors.black45),),
+                        onPressed: (){
+                          setState(() {
+                            isRegister = true;
+                          });
+                        }),
+                  ],
+                ),
+                SizedBox(height: 16,),
                 _buildTextFormField("Email Adress", _emailController),
                 SizedBox(height: 16,),
                 _buildTextFormField("Password", _passwordController),
                 SizedBox(height: 16,),
-                _buildTextFormField("Confirm Password", _cPasswordController),
-                SizedBox(height: 16,),
+                AnimatedContainer(
+                    height: isRegister ? 60 : 0,
+                    duration: _duration,
+                    curve: _curve,
+                    child: _buildTextFormField("Confirm Password", _cPasswordController)),
+                AnimatedContainer(height: isRegister?16:0,duration: _duration,
+                  curve: _curve,),
                 FlatButton(
                   onPressed: (){
                     if(_formKey.currentState!.validate()){
-                      print("모든 입력값이 올바르구나!");
+                      print("확인");
+                      Provider.of<PageNotifier>(context,listen: false).goToMain();
                     }
                   },
                   color: Colors.black26,
@@ -75,8 +111,31 @@ class _AuthWidgetState extends State<AuthWidget> {
                     borderRadius: BorderRadius.circular(_cornerRadius)
                   ),
                   padding: EdgeInsets.all(16),
-                  child: Text("Login"),)
-              ],
+                  child: Text(isRegister?"Register":"Login"),),
+                Divider(
+                  height:33,
+                  thickness: 1,
+                  color: Colors.black54,
+                  indent: 0,
+                  endIndent: 0,
+                ),
+                ButtonBar(
+                  alignment: MainAxisAlignment.center,
+                  children: [
+                    _buildSocialButton('assets/icon-google.png', (){
+                      Provider.of<PageNotifier>(context,listen: false).goToMain();
+                    }),
+                    _buildSocialButton('assets/icon-facebook.png', (){
+                      Provider.of<PageNotifier>(context,listen: false).goToMain();
+                    }),
+                    _buildSocialButton('assets/icon-apple.png', (){
+                      Provider.of<PageNotifier>(context,listen: false).goToMain();
+                    }),
+
+                  ],
+                )
+
+              ].reversed.toList()
             ),
           ),
         ),
@@ -85,13 +144,31 @@ class _AuthWidgetState extends State<AuthWidget> {
     );
   }
 
+  Container _buildSocialButton(String imagePath, Function onPressed) {
+    return Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(25),
+                      color: Colors.black12
+                    ),
+                    child: IconButton(
+                      color: null,
+                        onPressed: (){},
+                        icon: ImageIcon(AssetImage(imagePath),color: null,)),
+                  );
+  }
+
   TextFormField _buildTextFormField(String labelText, TextEditingController controller) {
     return TextFormField(
                 cursorColor: Colors.white,
                 controller: controller,
                 validator: (text){
-                  if(text == null || text.isEmpty){
+                  if(controller != _cPasswordController && (text == null || text.isEmpty)){
                     return "입력창이 비어있어요!";
+                  }
+                  if(controller == _cPasswordController && isRegister && (text == null || text.isEmpty) && (_cPasswordController != _passwordController)){
+                    return "비밀번호확인 칸을 확인하세요.";
                   }
                   return null;
                 },
